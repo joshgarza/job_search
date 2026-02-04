@@ -1,0 +1,103 @@
+# Filters for Josh Garza - San Diego, Remote OK, No Relocation
+# Target: ~20 jobs from 300+
+
+role:
+  include:
+    - full stack
+    - fullstack
+    - backend
+    - frontend
+    - software engineer
+    - web developer
+  exclude:
+    - senior staff
+    - staff engineer
+    - staff software
+    - principal
+    - architect
+    - manager
+    - director
+    - vp
+    - lead
+    - head of
+    - devops
+    - sre
+    - site reliability
+    - data engineer
+    - machine learning engineer
+    - ml engineer
+    - mobile engineer
+    - ios engineer
+    - android engineer
+    - embedded
+    - founding engineer
+    - customer success
+    - account exec
+    - sales
+
+location:
+  include:
+    - san diego
+    - remote
+  exclude:
+    # Relocation requirements
+    - relocation required
+    - must relocate
+    - on-site only
+    - onsite only
+    - in-office only
+    - no remote
+    # Region-only restrictions
+    - europe only
+    - eu only
+    - uk only
+    - emea only
+    - apac only
+    - remote (europe
+    - remote (eu)
+    - remote (uk)
+    - remote (emea)
+    - remote latam
+    - latam only
+    - cet)
+    - cest)
+    - gmt)
+    # Onsite-only locations (not remote friendly)
+    - hamburg, germany
+    - tokyo, japan
+    - singapore
+    - sydney, australia
+    - melbourne, australia
+  remote_ok: true
+
+company:
+  exclude_keywords:
+    - defense
+    - military
+    - gambling
+    - casino
+    - adult
+    - crypto
+    - blockchain
+    - web3
+
+tech:
+  # Must match at least 3 of these technologies
+  require_any:
+    - typescript
+    - javascript
+    - python
+    - react
+    - next.js
+    - nextjs
+    - node
+    - express
+    - postgresql
+    - postgres
+    - mongodb
+    - aws
+    - llm
+    - gpt
+    - openai
+    - langchain
+  min_match: 4
