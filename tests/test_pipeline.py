@@ -48,3 +48,31 @@ class TestPipeline:
 
             mock_espo.create_account.assert_not_called()
             mock_espo.create_opportunity.assert_called_once()
+
+    def test_pipeline_continues_when_scraper_fails(self, sample_job_data):
+        from src.models import JobPost
+        from src.pipeline import run_pipeline
+
+        # First scraper fails, second succeeds
+        failing_scraper = Mock()
+        failing_scraper.scrape.side_effect = RuntimeError("Scraper failed")
+
+        working_scraper = Mock()
+        working_scraper.scrape.return_value = [JobPost(**sample_job_data)]
+
+        def mock_get_scraper(source):
+            if source == "failing":
+                return failing_scraper
+            elif source == "working":
+                return working_scraper
+            return None
+
+        with patch("src.pipeline.get_scraper", side_effect=mock_get_scraper):
+            with patch("src.pipeline.db") as mock_db:
+                mock_db.is_duplicate.return_value = True  # Skip actual processing
+                # Should not raise, pipeline continues
+                run_pipeline(["failing", "working"], dry_run=True)
+
+        # Both scrapers should have been called
+        failing_scraper.scrape.assert_called_once()
+        working_scraper.scrape.assert_called_once()

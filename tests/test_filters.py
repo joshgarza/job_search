@@ -84,6 +84,50 @@ class TestTechFilter:
         assert passes_tech_filter(job, config) == True
 
 
+class TestTechExclusionFilter:
+    def test_excludes_tech_in_stack(self, sample_job_data):
+        from src.models import JobPost
+        from src.filters import passes_tech_filter
+
+        data = sample_job_data.copy()
+        data["tech_stack"] = ["python", "cobol", "aws"]
+        job = JobPost(**data)
+        config = {"require_any": ["python", "aws"], "min_match": 1, "exclude": ["cobol"]}
+        assert passes_tech_filter(job, config) == False
+
+    def test_excludes_tech_in_description(self, sample_job_data):
+        from src.models import JobPost
+        from src.filters import passes_tech_filter
+
+        data = sample_job_data.copy()
+        data["tech_stack"] = ["python"]
+        data["description"] = "We use Python and .NET framework"
+        job = JobPost(**data)
+        config = {"require_any": ["python"], "min_match": 1, "exclude": [".net"]}
+        assert passes_tech_filter(job, config) == False
+
+    def test_passes_without_excluded_tech(self, sample_job_data):
+        from src.models import JobPost
+        from src.filters import passes_tech_filter
+
+        data = sample_job_data.copy()
+        data["tech_stack"] = ["python", "react", "aws"]
+        data["description"] = "Modern web stack"
+        job = JobPost(**data)
+        config = {"require_any": ["python", "react"], "min_match": 1, "exclude": ["cobol", "fortran"]}
+        assert passes_tech_filter(job, config) == True
+
+    def test_exclude_is_case_insensitive(self, sample_job_data):
+        from src.models import JobPost
+        from src.filters import passes_tech_filter
+
+        data = sample_job_data.copy()
+        data["tech_stack"] = ["COBOL", "python"]
+        job = JobPost(**data)
+        config = {"require_any": ["python"], "min_match": 1, "exclude": ["cobol"]}
+        assert passes_tech_filter(job, config) == False
+
+
 class TestFullFilter:
     def test_filter_job_all_pass(self, sample_job_data, filter_config):
         from src.models import JobPost

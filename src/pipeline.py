@@ -5,6 +5,8 @@ from src.espo_client import EspoClient
 from src.db import JobDatabase
 from src.filters import filter_job
 from src.scrapers.hn_hiring import HNHiringScraper
+from src.scrapers.wellfound import WellfoundScraper
+from src.scrapers.indeed import IndeedScraper
 
 load_dotenv("config/.env")
 
@@ -17,7 +19,11 @@ db = JobDatabase()
 
 
 def get_scraper(source: str):
-    scrapers = {"hn_hiring": HNHiringScraper()}
+    scrapers = {
+        "hn_hiring": HNHiringScraper(),
+        "wellfound": WellfoundScraper(),
+        "indeed": IndeedScraper(),
+    }
     return scrapers.get(source)
 
 
@@ -69,7 +75,11 @@ def run_pipeline(sources: list[str], dry_run: bool = False):
             continue
 
         print(f"Scraping {source}...")
-        jobs = scraper.scrape()
+        try:
+            jobs = scraper.scrape()
+        except Exception as e:
+            print(f"Error scraping {source}: {e}")
+            continue
         print(f"Found {len(jobs)} jobs")
 
         for job in jobs:
@@ -78,12 +88,11 @@ def run_pipeline(sources: list[str], dry_run: bool = False):
             if db.is_duplicate(job):
                 continue
 
-            db.save_job(job)
-
             if dry_run:
                 print(f"[DRY RUN] Would sync: {job.company_name} - {job.title}")
                 synced += 1
             else:
+                db.save_job(job)
                 if sync_to_crm(job):
                     print(f"Synced: {job.company_name} - {job.title}")
                     synced += 1

@@ -5,16 +5,18 @@ A Python pipeline that scrapes software engineering job opportunities from web s
 ## Architecture
 
 ```
-[HN Who's Hiring] → [Normalizer] → [Filter] → [Dedup] → [EspoCRM Sync]
-                                                  ↓
-                                             SQLite DB
-                                          (cache + state)
+[HN Who's Hiring]  ─┐
+[Wellfound]        ─┼→ [Normalizer] → [Filter] → [Dedup] → [EspoCRM Sync]
+[Indeed/JSearch]   ─┘                                 ↓
+                                                 SQLite DB
+                                              (cache + state)
 ```
 
 ## Prerequisites
 
 - Python 3.10+
 - Access to an EspoCRM instance
+- (Optional) RapidAPI key for Indeed/JSearch scraper
 
 ## Setup
 
@@ -35,16 +37,24 @@ source .venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
+playwright install chromium
 ```
 
-### 4. Configure EspoCRM credentials
+### 4. Configure credentials
 
-Edit `config/.env` with your EspoCRM instance details:
+Edit `config/.env` with your credentials:
 
 ```bash
+# EspoCRM
 ESPO_URL=http://192.168.68.68:8080
 ESPO_USER=admin
 ESPO_PASS=your_password
+
+# Indeed/JSearch (optional)
+# 1. Sign up at https://rapidapi.com
+# 2. Subscribe to JSearch API (free tier): https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+# 3. Copy your API key from the dashboard
+RAPIDAPI_KEY=your_rapidapi_key
 ```
 
 ### 5. Configure filters (optional)
@@ -72,6 +82,23 @@ company:
   exclude_keywords:
     - defense
     - gambling
+
+tech:
+  require_any:
+    - python
+    - typescript
+    - react
+  min_match: 2
+  exclude:           # Reject jobs with these technologies
+    - cobol
+    - fortran
+    - .net
+
+experience:          # Filter by experience level
+  max_years: 5       # Reject jobs requiring more than 5 years
+  levels:
+    - junior
+    - mid
 ```
 
 ## Usage
@@ -91,7 +118,7 @@ python cli.py run
 ```
 
 This will:
-1. Scrape the latest HN "Who's Hiring" thread
+1. Scrape jobs from the configured sources
 2. Filter jobs based on `config/filters.yaml`
 3. Skip duplicates already in the database
 4. Create Account and Contact records in EspoCRM
@@ -107,10 +134,17 @@ Shows counts of total jobs scraped, synced, and pending.
 ### Specify different sources
 
 ```bash
+# Single source
 python cli.py run --sources hn_hiring
+
+# Multiple sources
+python cli.py run --sources hn_hiring,wellfound,indeed
 ```
 
-Currently only `hn_hiring` is implemented.
+Available sources:
+- `hn_hiring` - Hacker News "Who's Hiring" monthly threads
+- `indeed` - Indeed/Glassdoor via JSearch API (requires RAPIDAPI_KEY + subscription)
+- `wellfound` - Wellfound startup jobs (requires Playwright system deps, may be blocked by bot protection)
 
 ## Running Tests
 
@@ -118,7 +152,7 @@ Currently only `hn_hiring` is implemented.
 pytest -v
 ```
 
-All 27 tests should pass.
+All 67 tests should pass.
 
 ## Project Structure
 
@@ -128,15 +162,17 @@ job_search/
 │   ├── models.py           # Pydantic data models
 │   ├── scrapers/
 │   │   ├── base.py         # Abstract scraper interface
-│   │   └── hn_hiring.py    # HN Who's Hiring scraper
+│   │   ├── hn_hiring.py    # HN Who's Hiring scraper
+│   │   ├── wellfound.py    # Wellfound scraper (Playwright)
+│   │   └── indeed.py       # Indeed/JSearch API scraper
 │   ├── filters.py          # Job filtering logic
 │   ├── espo_client.py      # EspoCRM API client
 │   ├── db.py               # SQLite storage
 │   └── pipeline.py         # Main orchestration
-├── tests/                  # Test suite
+├── tests/                  # Test suite (67 tests)
 ├── config/
 │   ├── filters.yaml        # Filter configuration
-│   └── .env                # EspoCRM credentials (not in git)
+│   └── .env                # Credentials (not in git)
 ├── data/                   # SQLite database (not in git)
 ├── cli.py                  # Command-line interface
 └── requirements.txt

@@ -82,22 +82,54 @@ company:
     - web3
 
 tech:
-  # Must match at least 3 of these technologies
+  # Must match at least 2 of these technologies
   require_any:
     - typescript
     - javascript
     - python
+    - java
+    - go
+    - golang
     - react
     - next.js
     - nextjs
     - node
     - express
+    - django
+    - fastapi
+    - flask
     - postgresql
     - postgres
+    - mysql
     - mongodb
+    - redis
     - aws
+    - gcp
+    - azure
+    - kubernetes
+    - docker
+    - graphql
+    - rest
+    - api
     - llm
     - gpt
     - openai
     - langchain
-  min_match: 4
+  min_match: 2
+  exclude:
+    - cobol
+    - fortran
+    - .net
+    - c#
+    - visual basic
+    - vb.net
+    - mainframe
+    - as400
+    - rpg
+    - sap abap
+
+experience:
+  max_years: 5
+  levels:
+    - junior
+    - mid
